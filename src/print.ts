@@ -1,7 +1,9 @@
-import * as IPP from "@sealsystems/ipp";
+import * as IPP from "./ipp";
 import { promisify } from "util";
 
-const printer = new IPP.Printer("https://drucker.d7.whka.de/printers/domus7-color");
+const PRINTER_URL = `${process.env.PUBLIC_URL}/printers/${process.env.REACT_APP_PRINTER_NAME}`;
+console.log(PRINTER_URL);
+const printer: IPP.Printer = new IPP.Printer(PRINTER_URL);
 
 interface PrintOptions {
     color: boolean;
@@ -22,7 +24,7 @@ export async function print(file: Buffer, options: PrintOptions) {
         data: file
     };
    
-    const { id: jobId, statusCode, "job-attributes-tag": jobAttributes }: IPP.PrintJobResponse = await promisify(printer.execute)("Print-Job" as any, printMessage) as any;
+    const { id: jobId, statusCode, "job-attributes-tag": jobAttributes }: IPP.PrintJobResponse = await promisify(printer.execute).bind(printer)("Print-Job" as any, printMessage) as any;
     console.log(`placed printing job ${jobId} with status '${statusCode}'`, jobAttributes);
 
     if (statusCode !== "successful-ok") {
@@ -35,7 +37,7 @@ export async function print(file: Buffer, options: PrintOptions) {
                 "job-id": jobId
             }
         };
-        const { "job-attributes-tag": jobAttributes } = await promisify(printer.execute)("Get-Job-Attributes" as any, getAttributesMessage as any) as IPP.GetJobAttributesResponse;
+        const { "job-attributes-tag": jobAttributes } = await promisify(printer.execute).bind(printer)("Get-Job-Attributes" as any, getAttributesMessage as any) as IPP.GetJobAttributesResponse;
         console.log("print status", jobAttributes);
 
         await new Promise(res => setTimeout(res, 10_000));
